@@ -1,0 +1,61 @@
+Requests have a maximum size limit.  The exact size isn't yet known.
+Failures return null output (this is why we split the code in half in
+commit a1bace3)
+
+Requesting a game list returns JSON output that is 1490985 bytes long
+(~1.4MB), so that's obviously okay (and could be shorter--the output
+is pretty-printed).
+
+The average length of a game name is 15.5 bytes long.
+
+Price data is close-packed JSON.  Example: one success, one failure:
+    {"10":{"success":true,"data":{"price_overview":{"currency":"USD","initial":999,"final":999,"discount_percent":0}}},"7":{"success":false}}
+
+JSON beginning delimiter:
+    1   {
+
+Successful record:
+    N+2 "<id_int>"
+    17  :{"success":true,
+    53  "data":{"price_overview":{"currency":"USD","initial":
+    19  <initial_price_int>
+    9   ,"final":
+    N   <final_price_int>
+    20  ,"discount_percent":
+    N   <discount_int>
+    3   }}}
+
+Comma separator:
+    1   ,
+    
+Failed size:
+    N+2 "7"
+    18  :{"success":false}
+
+JSON end delimiter:
+    1   }
+
+
+Successful record size:
+    104 bytes + length(id) + length(initial_price) + length(final_price + length(final_price)
+
+Failed record size:
+    20 + length(id) 
+
+Punctuation size:
+    2 + 1 * (number_of_records-1)
+
+Total size:
+    126 + length(id) + length(initial_price) + length(final_price + length(final_price) + (num_records -1 )
+
+ID lengths average 5.5 bytes (round up to 6 bytes).  Most prices are 3 or 4 bytes long, and discounts are 1 or 2 bytes.
+
+Thus, an "average" successful game record should be:
+    126 + 5.5 + 3.5 + 1.5 = 136.5 bytes 
+
+The largest block of data returned successfully so far is 17,081 bytes long.
+
+That's ~124 full records every time, as a best-case scenario.
+
+
+
